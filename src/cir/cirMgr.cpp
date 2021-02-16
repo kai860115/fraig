@@ -624,7 +624,7 @@ CirMgr::printNetlist() const
    CirGate::setGlobalRef();
    GateList dfsList;
    for (const auto& id : _POIds) {
-      _totGates[id]->dfsTravelsal(dfsList);
+      dfsTraversal(_totGates[id], dfsList);
    }
    for (size_t i = 0; i < dfsList.size(); i++) {
       cout << "[" << i << "] ";
@@ -690,7 +690,7 @@ CirMgr::writeAag(ostream& outfile) const
    CirGate::setGlobalRef();
    GateList dfsList;
    for (const auto& id : _POIds) {
-      _totGates[id]->dfsTravelsal(dfsList);
+      dfsTraversal(_totGates[id], dfsList);
    }
    GateList aigList;
    aigList.reserve(_headerInfo[4]);
@@ -728,3 +728,28 @@ CirMgr::writeGate(ostream& outfile, CirGate *g) const
 {
 }
 
+void 
+CirMgr::dfsTraversal(CirGate* g) const {
+   if (g->isGlobalRef())
+      return;
+   g->setToGlobalRef();
+   for (size_t i = 0; i < 2; i++) {
+      CirGate* fanin = g->getFanin(i).gate();
+      if (fanin) 
+         dfsTraversal(fanin);
+   }
+}
+
+void 
+CirMgr::dfsTraversal(CirGate* g, GateList& dfsList) const {
+   if (g->isGlobalRef())
+      return;
+   g->setToGlobalRef();
+   for (size_t i = 0; i < 2; i++) {
+      CirGate* fanin = g->getFanin(i).gate();
+      if (fanin != 0)
+         dfsTraversal(fanin, dfsList);
+   }
+   if (g->getTypeStr()[0] != 'U')
+      dfsList.push_back(g);
+}

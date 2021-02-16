@@ -45,6 +45,10 @@ public:
    // Member functions about circuit construction
    bool readCircuit(const string&);
 
+   // Travelsal
+   void dfsTraversal(CirGate*) const;
+   void dfsTraversal(CirGate*, GateList&) const;
+
    // Member functions about circuit optimization
    void sweep();
    void optimize();

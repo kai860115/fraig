@@ -53,6 +53,7 @@ public:
    // Basic access methods
    virtual string getTypeStr() const { return ""; }
    virtual string getName() const { return ""; }
+   virtual AigGateV getFanin(unsigned i) const { return AigGateV(0, 0); }
    unsigned getGid() const { return _gid; }
    unsigned getLineNo() const { return _lineNo; }
    virtual bool isAig() const { return false; }
@@ -66,12 +67,6 @@ public:
    virtual void setFanout(const AigGateV& g, size_t idx) {}
    virtual void addFanout(const AigGateV& g) {}
    virtual void setName(string s) {}
-   virtual void dfsTravelsal(GateList& dfsList) { 
-      if (isGlobalRef())
-         return;
-      setToGlobalRef(); 
-      dfsList.push_back(this); 
-   }
    virtual void resizeFaninList(size_t n) {}
    virtual void reserveFaninList(size_t n) {}
    virtual void sortFanoutList() {}
@@ -102,18 +97,18 @@ protected:
 
 class AigGate : public CirGate {
 public:
-   AigGate(unsigned gid, unsigned lineNo, AigGateV fanin1, AigGateV fanin2) : CirGate(gid, lineNo), _fanin1(fanin1), _fanin2(fanin2) {}
    AigGate(unsigned gid, unsigned lineNo) : CirGate(gid, lineNo) {}
    ~AigGate() {}
    
    string getTypeStr() const { return "AIG"; }
+   AigGateV getFanin(unsigned i) const { return (i < 2 ? _fanin[i] : AigGateV(0, 0)); }
 
-   bool checkFFanin() const { return (_fanin1.gate())->getTypeStr() == "UNDEF" || (_fanin2.gate())->getTypeStr() == "UNDEF"; } 
+   bool checkFFanin() const { return (_fanin[0].gate())->getTypeStr() == "UNDEF" || (_fanin[1].gate())->getTypeStr() == "UNDEF"; } 
    bool checkUnused() const { return _fanoutList.empty(); }
 
    void setFanin(const AigGateV& g1, const AigGateV& g2) {
-      _fanin1 = g1;
-      _fanin2 = g2;
+      _fanin[0] = g1;
+      _fanin[1] = g2;
    }
    void setFanout(const AigGateV& g, size_t idx) {
       _fanoutList[idx] = g;
@@ -122,14 +117,6 @@ public:
       _fanoutList.push_back(g);
    }
 
-   void dfsTravelsal(GateList& dfsList) {
-      if (isGlobalRef())
-         return;
-      setToGlobalRef();
-      _fanin1.gate()->dfsTravelsal(dfsList);
-      _fanin2.gate()->dfsTravelsal(dfsList);
-      dfsList.push_back(this);
-   }
    void sortFanoutList() {
       sort(_fanoutList.begin(), _fanoutList.end(), [](const AigGateV& g1, const AigGateV& g2) {
          return g1.gate()->getGid() * 2 + unsigned(g1.isInv()) < g2.gate()->getGid() * 2 + unsigned(g2.isInv());
@@ -140,13 +127,13 @@ public:
 
    void printGate() const {
       cout << "AIG " << _gid << " "
-           << (_fanin1.gate()->getTypeStr() == "UNDEF" ? "*" : "") << (_fanin1.isInv() ? "!" : "") << (_fanin1.gate())->getGid() << " "
-           << (_fanin2.gate()->getTypeStr() == "UNDEF" ? "*" : "") << (_fanin2.isInv() ? "!" : "") << (_fanin2.gate())->getGid() << "\n";
+           << (_fanin[0].gate()->getTypeStr() == "UNDEF" ? "*" : "") << (_fanin[0].isInv() ? "!" : "") << (_fanin[0].gate())->getGid() << " "
+           << (_fanin[1].gate()->getTypeStr() == "UNDEF" ? "*" : "") << (_fanin[1].isInv() ? "!" : "") << (_fanin[1].gate())->getGid() << "\n";
    }
    void write(ostream& outfile) const {
       outfile << _gid * 2 << " " 
-              << _fanin1.gate()->getGid() * 2 + unsigned(_fanin1.isInv()) << " "
-              << _fanin2.gate()->getGid() * 2 + unsigned(_fanin2.isInv()) << "\n";
+              << _fanin[0].gate()->getGid() * 2 + unsigned(_fanin[0].isInv()) << " "
+              << _fanin[1].gate()->getGid() * 2 + unsigned(_fanin[1].isInv()) << "\n";
    }
    void reportFanin(int level, int nSpace, bool inv) const {
       cout << string(nSpace, ' ') << (inv ? "!" : "") << getTypeStr() << " " << _gid;
@@ -156,8 +143,8 @@ public:
          else {
             setToGlobalRef();
             cout << "\n";
-            (_fanin1.gate())->reportFanin(level - 1, nSpace + 2, _fanin1.isInv());
-            (_fanin2.gate())->reportFanin(level - 1, nSpace + 2, _fanin2.isInv());
+            (_fanin[0].gate())->reportFanin(level - 1, nSpace + 2, _fanin[0].isInv());
+            (_fanin[1].gate())->reportFanin(level - 1, nSpace + 2, _fanin[1].isInv());
          }
       }
       else 
@@ -184,8 +171,7 @@ public:
    }
 
 private:
-   AigGateV _fanin1;
-   AigGateV _fanin2;
+   AigGateV _fanin[2];
    vector<AigGateV> _fanoutList;
 
 };
@@ -250,25 +236,17 @@ private:
 
 class POGate : public CirGate {
 public:
-   POGate(unsigned gid, unsigned lineNo, AigGateV fanin) : CirGate(gid, lineNo), _fanin(fanin) {}
    POGate(unsigned gid, unsigned lineNo) : CirGate(gid, lineNo) {}
    ~POGate() {}
 
    string getTypeStr() const { return "PO"; }
    string getName() const { return _name; }
+   AigGateV getFanin(unsigned i) const { return (i < 1 ? _fanin : AigGateV(0, 0)); }
    
    bool checkFFanin() const { return (_fanin.gate())->getTypeStr() == "UNDEF"; } 
 
    void setFanin(const AigGateV& g) { _fanin = g; }
    void setName(string s) { _name = s; }
-   
-   void dfsTravelsal(GateList& dfsList) {
-      if (isGlobalRef())
-         return;
-      setToGlobalRef();
-      _fanin.gate()->dfsTravelsal(dfsList);
-      dfsList.push_back(this);
-   }
    
    void printGate() const {
       cout << "PO  " << _gid << " "
@@ -373,8 +351,6 @@ public:
    }
    void resizeFaninList(size_t n) { _fanoutList.resize(n); }
    void reserveFaninList(size_t n) { _fanoutList.reserve(n); }
-
-   void dfsTravelsal(GateList& dfsList) { setToGlobalRef(); }
    
    void printGate() const {
       cout << "UNDEF" << _gid << "\n";
