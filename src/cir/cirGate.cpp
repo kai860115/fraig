@@ -22,6 +22,7 @@ using namespace std;
 //       your own variables and functions.
 
 extern CirMgr *cirMgr;
+size_t CirGate::_globalRef = 0;
 
 /**************************************/
 /*   class CirGate member functions   */
@@ -29,17 +30,25 @@ extern CirMgr *cirMgr;
 void
 CirGate::reportGate() const
 {
+   string gateInfo = getTypeStr() + "(" + to_string(_gid) + ")" + (getName() == "" ? "" : "\"" + getName() + "\"") + ", line " + to_string(_lineNo);
+   cout << "==================================================\n";
+   cout << "= " << setw(47) << left << gateInfo << "=\n";
+   cout << "==================================================\n";
 }
 
 void
 CirGate::reportFanin(int level) const
 {
    assert (level >= 0);
+   CirGate::setGlobalRef();
+   reportFanin(level, 0, false);
 }
 
 void
 CirGate::reportFanout(int level) const
 {
    assert (level >= 0);
+   CirGate::setGlobalRef();
+   reportFanout(level, 0, false);
 }
 

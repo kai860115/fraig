@@ -13,6 +13,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "cirGate.h"
 
 using namespace std;
 
@@ -26,11 +27,20 @@ class CirMgr
 {
 public:
    CirMgr() {}
-   ~CirMgr() {} 
+   ~CirMgr() {
+      for (size_t i = 0; i < _totGates.size(); i++) {
+         if (_totGates[i]) {
+            delete _totGates[i];
+            _totGates[i] = 0;
+         }
+      }
+   }
 
    // Access functions
    // return '0' if "gid" corresponds to an undefined gate.
-   CirGate* getGate(unsigned gid) const { return 0; }
+   CirGate* getGate(unsigned gid) const { 
+      return (gid >= _totGates.size() ? 0 : _totGates[gid]);
+   }
 
    // Member functions about circuit construction
    bool readCircuit(const string&);
@@ -61,6 +71,11 @@ public:
 
 private:
    ofstream           *_simLog;
+   IdList _PIIds;
+   IdList _AigIds;
+   IdList _POIds;
+   GateList _totGates;
+   unsigned _headerInfo[5];
 
 };
 
