@@ -29,18 +29,21 @@ class CirGate;
 class AigGateV {
 #define NEG1 0x1
 public:
-   AigGateV(CirGate* g, size_t phase) : _gateV(size_t(g) + phase) {}
-   AigGateV(const AigGateV& gv) : _gateV(gv._gateV) {}
+   AigGateV(CirGate* g, size_t phase, unsigned gid) : _gateV(size_t(g) + phase), _gid(gid) {}
+   AigGateV(const AigGateV& gv) : _gateV(gv._gateV), _gid(gv._gid) {}
    AigGateV() {}
    CirGate* gate() const {
       return (CirGate*)(_gateV & ~size_t(NEG1));
    }
+   unsigned getGid() const { return _gid; }
    bool isInv() const {
       return (_gateV & NEG1);
    }
+   bool operator == (const AigGateV& gv) const { return _gateV == gv._gateV; }
 
 private:
    size_t _gateV;
+   unsigned _gid;
 };
 
 class CirGate
@@ -52,8 +55,9 @@ public:
 
    // Basic access methods
    virtual string getTypeStr() const { return ""; }
+   virtual GateType getType() const { return TOT_GATE; }
    virtual string getName() const { return ""; }
-   virtual AigGateV getFanin(unsigned i) const { return AigGateV(0, 0); }
+   virtual AigGateV getFanin(unsigned i) const { return AigGateV(0, 0, 0); }
    unsigned getGid() const { return _gid; }
    unsigned getLineNo() const { return _lineNo; }
    virtual bool isAig() const { return false; }
@@ -66,6 +70,7 @@ public:
    virtual void setFanin(const AigGateV& g) {}
    virtual void setFanout(const AigGateV& g, size_t idx) {}
    virtual void addFanout(const AigGateV& g) {}
+   virtual void removeFanout(const AigGateV& g) {}
    virtual void setName(string s) {}
    virtual void resizeFaninList(size_t n) {}
    virtual void reserveFaninList(size_t n) {}
@@ -101,7 +106,8 @@ public:
    ~AigGate() {}
    
    string getTypeStr() const { return "AIG"; }
-   AigGateV getFanin(unsigned i) const { return (i < 2 ? _fanin[i] : AigGateV(0, 0)); }
+   GateType getType() const { return AIG_GATE; }
+   AigGateV getFanin(unsigned i) const { return (i < 2 ? _fanin[i] : AigGateV(0, 0, 0)); }
 
    bool checkFFanin() const { return (_fanin[0].gate())->getTypeStr() == "UNDEF" || (_fanin[1].gate())->getTypeStr() == "UNDEF"; } 
    bool checkUnused() const { return _fanoutList.empty(); }
@@ -115,6 +121,11 @@ public:
    }
    void addFanout(const AigGateV& g) {
       _fanoutList.push_back(g);
+   }
+   void removeFanout(const AigGateV& g) {
+      auto it = find(_fanoutList.begin(), _fanoutList.end(), g);
+      if (it != _fanoutList.end())
+         _fanoutList.erase(it);
    }
 
    void sortFanoutList() {
@@ -182,6 +193,7 @@ public:
    ~PIGate() {}
 
    string getTypeStr() const { return "PI"; }
+   GateType getType() const { return PI_GATE; }
    string getName() const { return _name; }
 
    bool checkUnused() const { return _fanoutList.empty(); }
@@ -191,6 +203,11 @@ public:
    }
    void addFanout(const AigGateV& g) {
       _fanoutList.push_back(g);
+   }
+   void removeFanout(const AigGateV& g) {
+      auto it = find(_fanoutList.begin(), _fanoutList.end(), g);
+      if (it != _fanoutList.end())
+         _fanoutList.erase(it);
    }
    void setName(string s) { _name = s; }
 
@@ -240,8 +257,9 @@ public:
    ~POGate() {}
 
    string getTypeStr() const { return "PO"; }
+   GateType getType() const { return PO_GATE; }
    string getName() const { return _name; }
-   AigGateV getFanin(unsigned i) const { return (i < 1 ? _fanin : AigGateV(0, 0)); }
+   AigGateV getFanin(unsigned i) const { return (i < 1 ? _fanin : AigGateV(0, 0, 0)); }
    
    bool checkFFanin() const { return (_fanin.gate())->getTypeStr() == "UNDEF"; } 
 
@@ -283,12 +301,18 @@ public:
    ~CONST0Gate() {}
    
    string getTypeStr() const { return "CONST"; }
+   GateType getType() const { return CONST_GATE; }
 
    void setFanout(const AigGateV& g, size_t idx) {
       _fanoutList[idx] = g;
    }
    void addFanout(const AigGateV& g) {
       _fanoutList.push_back(g);
+   }
+   void removeFanout(const AigGateV& g) {
+      auto it = find(_fanoutList.begin(), _fanoutList.end(), g);
+      if (it != _fanoutList.end())
+         _fanoutList.erase(it);
    }
 
    void sortFanoutList() {
@@ -334,6 +358,7 @@ public:
    ~UNDEFGate() {}
    
    string getTypeStr() const { return "UNDEF"; }
+   GateType getType() const { return UNDEF_GATE; }
    
    bool checkUnused() const { return _fanoutList.empty(); }
 
@@ -342,6 +367,11 @@ public:
    }
    void addFanout(const AigGateV& g) {
       _fanoutList.push_back(g);
+   }
+   void removeFanout(const AigGateV& g) {
+      auto it = find(_fanoutList.begin(), _fanoutList.end(), g);
+      if (it != _fanoutList.end())
+         _fanoutList.erase(it);
    }
    
    void sortFanoutList() {

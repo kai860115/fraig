@@ -568,8 +568,8 @@ CirMgr::readCircuit(const string& fileName)
          _totGates[fanin_gid / 2] = new UNDEFGate(fanin_gid / 2);
          _totGates[fanin_gid / 2]->reserveFaninList(fanoutCapacity[fanin_gid / 2]);
       }
-      _totGates[gid]->setFanin(AigGateV(_totGates[fanin_gid / 2], fanin_gid % 2));
-      _totGates[fanin_gid / 2]->addFanout(AigGateV(_totGates[gid], fanin_gid % 2));
+      _totGates[gid]->setFanin(AigGateV(_totGates[fanin_gid / 2], fanin_gid % 2, fanin_gid / 2));
+      _totGates[fanin_gid / 2]->addFanout(AigGateV(_totGates[gid], fanin_gid % 2, gid));
    }
    for (size_t i = 0; i < AigInfo.size(); i++) {
       size_t gid = AigInfo[i][0];
@@ -579,9 +579,9 @@ CirMgr::readCircuit(const string& fileName)
             _totGates[fanin_gid / 2] = new UNDEFGate(fanin_gid / 2);
             _totGates[fanin_gid / 2]->reserveFaninList(fanoutCapacity[fanin_gid / 2]);
          }
-         _totGates[fanin_gid / 2]->addFanout(AigGateV(_totGates[gid / 2], fanin_gid % 2));
+         _totGates[fanin_gid / 2]->addFanout(AigGateV(_totGates[gid / 2], fanin_gid % 2, gid / 2));
       }
-      _totGates[gid / 2]->setFanin(AigGateV(_totGates[AigInfo[i][1] / 2], AigInfo[i][1] % 2), AigGateV(_totGates[AigInfo[i][2] / 2], AigInfo[i][2] % 2));
+      _totGates[gid / 2]->setFanin(AigGateV(_totGates[AigInfo[i][1] / 2], AigInfo[i][1] % 2, AigInfo[i][1] / 2), AigGateV(_totGates[AigInfo[i][2] / 2], AigInfo[i][2] % 2, AigInfo[i][2] / 2));
    }
    
    for (auto& g : _totGates) {

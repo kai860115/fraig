@@ -2,7 +2,7 @@
 
 ## TODO
 
-- [ ] Sweeping
+- [x] Sweeping
 - [ ] Optimization
 - [ ] Strash
 - [ ] Simulation

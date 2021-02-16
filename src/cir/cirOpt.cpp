@@ -33,6 +33,31 @@ using namespace std;
 void
 CirMgr::sweep()
 {
+   CirGate::setGlobalRef();
+   for (auto& id : _POIds)
+      dfsTraversal(_totGates[id]);
+
+   for (size_t i = 0; i < _totGates.size(); i++) {
+      if (_totGates[i] && !_totGates[i]->isGlobalRef() && _totGates[i]->getType() == AIG_GATE) {
+         cout << "Sweeping: AIG(" << _totGates[i]->getGid() << ") removed...\n";
+         _headerInfo[4]--;
+
+         for (size_t j = 0; j < 2; j++) {
+            AigGateV faninV = _totGates[i]->getFanin(j);
+            if (_totGates[faninV.getGid()]) {
+               _totGates[faninV.getGid()]->removeFanout(AigGateV(_totGates[i], faninV.isInv(), i));
+            }
+         }
+         delete _totGates[i];
+         _totGates[i] = 0;
+      }
+      else if (_totGates[i] && !_totGates[i]->isGlobalRef() && _totGates[i]->getType() == UNDEF_GATE) {
+         cout << "Sweeping: UNDEF(" << _totGates[i]->getGid() << ") removed...\n";
+         delete _totGates[i];
+         _totGates[i] = 0;
+      }
+   }
+
 }
 
 // Recursively simplifying from POs;
