@@ -76,7 +76,6 @@ public:
 private:
    ofstream           *_simLog;
    IdList _PIIds;
-   IdList _AigIds;
    IdList _POIds;
    GateList _totGates;
    unsigned _headerInfo[5];

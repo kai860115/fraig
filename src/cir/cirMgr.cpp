@@ -423,7 +423,6 @@ CirMgr::readCircuit(const string& fileName)
    _totGates = GateList(_headerInfo[0] + _headerInfo[3] + 1, 0);
    _PIIds.reserve(_headerInfo[1]);
    _POIds.reserve(_headerInfo[3]);
-   _AigIds.reserve(_headerInfo[4]);
    vector<size_t> fanoutCapacity(_headerInfo[0] + 1, 1);
 
    // CONST0
@@ -483,6 +482,7 @@ CirMgr::readCircuit(const string& fileName)
 
    // Ands
    vector<vector<unsigned>> AigInfo(_headerInfo[4], vector<unsigned>(3, 0));
+   size_t nAigCheck = 0;
    for (size_t i = 0; i < _headerInfo[4]; i++) {
       if (!ifs.getline(buf, 1024) || ifs.eof())
          break; 
@@ -502,7 +502,7 @@ CirMgr::readCircuit(const string& fileName)
                return parseError(REDEF_GATE);
             }
             _totGates[id / 2] = new AigGate(id / 2, lineNo + 1);
-            _AigIds.push_back(id / 2);
+            nAigCheck++;
          }
          else 
             fanoutCapacity[id / 2]++;
@@ -511,7 +511,7 @@ CirMgr::readCircuit(const string& fileName)
       colNo = 0;
       lineNo++;
    }
-   if (_AigIds.size() < _headerInfo[4]) {
+   if (nAigCheck < _headerInfo[4]) {
       errMsg = "AIG";
       return parseError(MISSING_DEF);
    }
@@ -610,11 +610,11 @@ CirMgr::printSummary() const
    cout << endl
         << "Circuit Statistics" << endl
         << "==================" << endl
-        << "  PI   " << setw(9) << right << _PIIds.size() << endl
-        << "  PO   " << setw(9) << right << _POIds.size() << endl
-        << "  AIG  " << setw(9) << right << _AigIds.size() << endl
+        << "  PI   " << setw(9) << right << _headerInfo[1] << endl
+        << "  PO   " << setw(9) << right << _headerInfo[3] << endl
+        << "  AIG  " << setw(9) << right << _headerInfo[4] << endl
         << "------------------" << endl
-        << "  Total" << setw(9) << right << _PIIds.size() + _POIds.size() + _AigIds.size() << endl;
+        << "  Total" << setw(9) << right << _headerInfo[1] + _headerInfo[3] + _headerInfo[4] << endl;
 }
 
 void
