@@ -4,6 +4,6 @@
 
 - [x] Sweeping
 - [x] Optimization
-- [ ] Strash
+- [x] Strash
 - [ ] Simulation
 - [ ] Fraig
