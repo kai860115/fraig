@@ -36,6 +36,7 @@ public:
       return (CirGate*)(_gateV & ~size_t(NEG1));
    }
    unsigned getGid() const { return _gid; }
+   size_t getGateV() const { return _gateV; }
    bool isInv() const {
       return (_gateV & NEG1);
    }
