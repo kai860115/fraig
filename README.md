@@ -3,7 +3,7 @@
 ## TODO
 
 - [x] Sweeping
-- [ ] Optimization
+- [x] Optimization
 - [ ] Strash
 - [ ] Simulation
 - [ ] Fraig

@@ -58,6 +58,8 @@ public:
    virtual GateType getType() const { return TOT_GATE; }
    virtual string getName() const { return ""; }
    virtual AigGateV getFanin(unsigned i) const { return AigGateV(0, 0, 0); }
+   virtual AigGateV getFanout(unsigned i) const { return AigGateV(0, 0, 0); }
+   virtual size_t getFanoutSize() const { return 0; }
    unsigned getGid() const { return _gid; }
    unsigned getLineNo() const { return _lineNo; }
    virtual bool isAig() const { return false; }
@@ -69,12 +71,34 @@ public:
    virtual void setFanin(const AigGateV& g1, const AigGateV& g2) {}
    virtual void setFanin(const AigGateV& g) {}
    virtual void setFanout(const AigGateV& g, size_t idx) {}
+   virtual void replaceFanin(const AigGateV& og, const AigGateV& ng) {}
    virtual void addFanout(const AigGateV& g) {}
    virtual void removeFanout(const AigGateV& g) {}
    virtual void setName(string s) {}
    virtual void resizeFaninList(size_t n) {}
    virtual void reserveFaninList(size_t n) {}
    virtual void sortFanoutList() {}
+   virtual bool hasConstFanin(unsigned id) const { return false; }
+   virtual bool hasIdenticalFanin() const { return false; }
+   virtual bool hasInvertedFanin() const { return false; }
+   virtual void merge(CirGate* g, bool isInv) {
+      for (size_t i = 0; i < 2; i++) {
+         CirGate* fanin = g->getFanin(i).gate();
+         bool isInvOld = g->getFanin(i).isInv();
+         if (fanin)
+            fanin->removeFanout(AigGateV(g, isInvOld, g->getGid()));
+      }
+
+      for (size_t i = 0; i < g->getFanoutSize(); i++) {
+         CirGate* fanout = g->getFanout(i).gate();
+         bool isInvOld = g->getFanout(i).isInv();
+         bool isInvNew = (!isInv != !isInvOld);
+         if (fanout) {
+            fanout->replaceFanin(AigGateV(g, isInvOld, g->getGid()), AigGateV(this, isInvNew, _gid));
+            addFanout(AigGateV(fanout, isInvNew, fanout->getGid()));
+         }
+      }
+   }
 
 
    // Printing functions
@@ -108,6 +132,9 @@ public:
    string getTypeStr() const { return "AIG"; }
    GateType getType() const { return AIG_GATE; }
    AigGateV getFanin(unsigned i) const { return (i < 2 ? _fanin[i] : AigGateV(0, 0, 0)); }
+   AigGateV getFanout(unsigned i) const { return _fanoutList[i]; }
+   size_t getFanoutSize() const { return _fanoutList.size(); }
+   bool isAig() const { return true; }
 
    bool checkFFanin() const { return (_fanin[0].gate())->getTypeStr() == "UNDEF" || (_fanin[1].gate())->getTypeStr() == "UNDEF"; } 
    bool checkUnused() const { return _fanoutList.empty(); }
@@ -118,6 +145,14 @@ public:
    }
    void setFanout(const AigGateV& g, size_t idx) {
       _fanoutList[idx] = g;
+   }
+   void replaceFanin(const AigGateV& og, const AigGateV& ng) {
+      for (size_t i = 0; i < 2; i++) {
+         if (_fanin[i] == og) {
+            _fanin[i] = ng;
+            return;
+         }
+      }
    }
    void addFanout(const AigGateV& g) {
       _fanoutList.push_back(g);
@@ -135,6 +170,23 @@ public:
    }
    void resizeFaninList(size_t n) { _fanoutList.resize(n); }
    void reserveFaninList(size_t n) { _fanoutList.reserve(n); }
+   bool hasConstFanin(unsigned id) const {
+      for (size_t i = 0; i < 2; i++) {
+         if (_fanin[i].gate()->getType() == CONST_GATE && _fanin[i].isInv() == bool(id))
+            return true;
+      }
+      return false;
+   }
+   bool hasIdenticalFanin() const {
+      if (_fanin[0].gate() == _fanin[1].gate() && _fanin[0].isInv() == _fanin[1].isInv())
+         return true;
+      return false;
+   }
+   bool hasInvertedFanin() const {
+      if (_fanin[0].gate() == _fanin[1].gate() && _fanin[0].isInv() != _fanin[1].isInv())
+         return true;
+      return false;
+   }
 
    void printGate() const {
       cout << "AIG " << _gid << " "
@@ -195,6 +247,8 @@ public:
    string getTypeStr() const { return "PI"; }
    GateType getType() const { return PI_GATE; }
    string getName() const { return _name; }
+   AigGateV getFanout(unsigned i) const { return _fanoutList[i]; }
+   size_t getFanoutSize() const { return _fanoutList.size(); }
 
    bool checkUnused() const { return _fanoutList.empty(); }
 
@@ -264,6 +318,11 @@ public:
    bool checkFFanin() const { return (_fanin.gate())->getTypeStr() == "UNDEF"; } 
 
    void setFanin(const AigGateV& g) { _fanin = g; }
+   void replaceFanin(const AigGateV& og, const AigGateV& ng) {
+      if (_fanin == og) {
+         _fanin = ng;
+      }
+   }
    void setName(string s) { _name = s; }
    
    void printGate() const {
@@ -302,6 +361,8 @@ public:
    
    string getTypeStr() const { return "CONST"; }
    GateType getType() const { return CONST_GATE; }
+   AigGateV getFanout(unsigned i) const { return _fanoutList[i]; }
+   size_t getFanoutSize() const { return _fanoutList.size(); }
 
    void setFanout(const AigGateV& g, size_t idx) {
       _fanoutList[idx] = g;
@@ -359,6 +420,8 @@ public:
    
    string getTypeStr() const { return "UNDEF"; }
    GateType getType() const { return UNDEF_GATE; }
+   AigGateV getFanout(unsigned i) const { return _fanoutList[i]; }
+   size_t getFanoutSize() const { return _fanoutList.size(); }
    
    bool checkUnused() const { return _fanoutList.empty(); }
 

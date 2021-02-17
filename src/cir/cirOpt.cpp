@@ -66,6 +66,63 @@ CirMgr::sweep()
 void
 CirMgr::optimize()
 {
+   CirGate::setGlobalRef();
+   GateList dfsList;
+   dfsList.reserve(_headerInfo[0] + _headerInfo[3] + 1);
+   for (const auto& id : _POIds)
+      dfsTraversal(_totGates[id], dfsList);
+
+   for (auto& g : dfsList) {
+      if (!g->isAig())
+         continue;
+      if (g->hasConstFanin(0)) {
+         _totGates[0]->merge(g, 0);
+         _headerInfo[4]--; 
+         cout << "Simplifying: " << 0 << " merging " << g->getGid() << "...\n";
+         delete _totGates[g->getGid()];
+         _totGates[g->getGid()] = 0;
+      }
+      else if (g->hasIdenticalFanin()) {
+         CirGate* mergeGate;
+         bool isInv = false;
+         mergeGate = g->getFanin(0).gate();
+         isInv = g->getFanin(0).isInv();
+         mergeGate->merge(g, isInv);
+         _headerInfo[4]--;
+         cout << "Simplifying: " << mergeGate->getGid() << " merging " << (isInv ? "!" : "") << g->getGid() << "...\n";
+         delete _totGates[g->getGid()];
+         _totGates[g->getGid()] = 0;
+      }
+      else if (g->hasInvertedFanin()) {
+         _totGates[0]->merge(g, 0);
+         _headerInfo[4]--;
+         cout << "Simplifying: " << 0 << " merging " << g->getGid() << "...\n";
+         delete _totGates[g->getGid()];
+         _totGates[g->getGid()] = 0;
+      }
+      else if (g->hasConstFanin(1)) {
+         CirGate* mergeGate;
+         bool isInv = false;
+         for (size_t i = 0; i < 2; i++) {
+            if (g->getFanin(i) != AigGateV(_totGates[0], 1, 0)) {
+               mergeGate = g->getFanin(i).gate();
+               isInv = g->getFanin(i).isInv();
+            }
+         }
+         mergeGate->merge(g, isInv);
+         _headerInfo[4]--;
+         cout << "Simplifying: " << mergeGate->getGid() << " merging " << (isInv ? "!" : "") << g->getGid() << "...\n";
+         delete _totGates[g->getGid()];
+         _totGates[g->getGid()] = 0;
+      }
+   }
+
+   for (size_t i = 0; i < _headerInfo[0] + 1; i++) {
+      if (_totGates[i] && _totGates[i]->getType() == UNDEF_GATE && _totGates[i]->getFanoutSize() == 0) {
+         delete _totGates[i];
+         _totGates[i] = 0;
+      }
+   }
 }
 
 /***************************************************/
