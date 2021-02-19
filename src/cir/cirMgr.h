@@ -26,13 +26,18 @@ extern CirMgr *cirMgr;
 class CirMgr
 {
 public:
-   CirMgr() {}
+   CirMgr() : _initFec(false), _fecGrps(0) {}
    ~CirMgr() {
       for (size_t i = 0; i < _totGates.size(); i++) {
          if (_totGates[i]) {
             delete _totGates[i];
             _totGates[i] = 0;
          }
+      }
+      for (auto& fecGrp : _fecGrps) {
+         if (fecGrp)
+            delete fecGrp;
+         fecGrp = 0;
       }
    }
 
@@ -41,6 +46,7 @@ public:
    CirGate* getGate(unsigned gid) const { 
       return (gid >= _totGates.size() ? 0 : _totGates[gid]);
    }
+   IdList* getFecGrp(const size_t& id) { return (id < _fecGrps.size() ? _fecGrps[id] : 0); }
 
    // Member functions about circuit construction
    bool readCircuit(const string&);
@@ -79,6 +85,11 @@ private:
    IdList _POIds;
    GateList _totGates;
    unsigned _headerInfo[5];
+   bool _initFec;
+   vector<IdList*> _fecGrps;
+   void initFecGrps(GateList&);
+   void simulate(GateList&, size_t);
+   void identifyFec();
 
 };
 

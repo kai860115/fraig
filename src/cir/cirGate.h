@@ -50,8 +50,8 @@ private:
 class CirGate
 {
 public:
-   CirGate() : _ref(0), _gid(0), _lineNo(0) {}
-   CirGate(unsigned gid, unsigned lineNo) : _ref(0), _gid(gid), _lineNo(lineNo) {}
+   CirGate() : _ref(0), _gid(0), _lineNo(0), _pattern(0) {}
+   CirGate(unsigned gid, unsigned lineNo) : _ref(0), _gid(gid), _lineNo(lineNo) , _pattern(0) {}
    virtual ~CirGate() {}
 
    // Basic access methods
@@ -100,6 +100,11 @@ public:
          }
       }
    }
+   void setPattern(const ull& pattern) { _pattern = pattern; }
+   ull getPattern() const { return _pattern; }
+   virtual void simulation() {}
+   virtual void setFecGrpIdx(const unsigned& i) {}
+   virtual unsigned getFecGrpIdx() const { return UINT_MAX; }
 
 
    // Printing functions
@@ -122,12 +127,13 @@ protected:
   mutable size_t _ref;
   unsigned _gid;
   unsigned _lineNo;
+  ull _pattern;
 
 };
 
 class AigGate : public CirGate {
 public:
-   AigGate(unsigned gid, unsigned lineNo) : CirGate(gid, lineNo) {}
+   AigGate(unsigned gid, unsigned lineNo) : CirGate(gid, lineNo), _fecGrpIdx(UINT_MAX) {}
    ~AigGate() {}
    
    string getTypeStr() const { return "AIG"; }
@@ -188,6 +194,11 @@ public:
          return true;
       return false;
    }
+   void simulation() {
+      _pattern = (_fanin[0].isInv() ? ~_fanin[0].gate()->getPattern() : _fanin[0].gate()->getPattern()) & (_fanin[1].isInv() ? ~_fanin[1].gate()->getPattern() : _fanin[1].gate()->getPattern());
+   }
+   void setFecGrpIdx(const unsigned& i) { _fecGrpIdx = i; }
+   unsigned getFecGrpIdx() const { return _fecGrpIdx; }
 
    void printGate() const {
       cout << "AIG " << _gid << " "
@@ -237,6 +248,7 @@ public:
 private:
    AigGateV _fanin[2];
    vector<AigGateV> _fanoutList;
+   unsigned _fecGrpIdx;
 
 };
 
@@ -325,6 +337,9 @@ public:
       }
    }
    void setName(string s) { _name = s; }
+   void simulation() {
+      _pattern = (_fanin.isInv() ? ~_fanin.gate()->getPattern() : _fanin.gate()->getPattern());
+   }
    
    void printGate() const {
       cout << "PO  " << _gid << " "
@@ -384,6 +399,8 @@ public:
    }
    void resizeFaninList(size_t n) { _fanoutList.resize(n); }
    void reserveFaninList(size_t n) { _fanoutList.reserve(n); }
+   void setFecGrpIdx(const unsigned& i) { _fecGrpIdx = i; }
+   unsigned getFecGrpIdx() const { return _fecGrpIdx; }
    
    void printGate() const {
       cout << "CONST0\n";
@@ -411,6 +428,7 @@ public:
 
 private:
    vector<AigGateV> _fanoutList;
+   unsigned _fecGrpIdx;
 
 };
 

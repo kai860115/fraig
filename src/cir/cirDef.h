@@ -22,6 +22,7 @@ class SatSolver;
 
 typedef vector<CirGate*>           GateList;
 typedef vector<unsigned>           IdList;
+typedef unsigned long long         ull;
 
 enum GateType
 {

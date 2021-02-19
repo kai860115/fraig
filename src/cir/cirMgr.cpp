@@ -682,6 +682,15 @@ CirMgr::printFloatGates() const
 void
 CirMgr::printFECPairs() const
 {
+   if (_fecGrps.empty())
+      return;
+   for (size_t i = 0; i < _fecGrps.size(); i++) {
+      cout << "[" << i << "]"; 
+      for (const auto& id : (*_fecGrps[i])) {
+         cout << " " << (_totGates[id]->getPattern() == _totGates[(*_fecGrps[i])[0]]->getPattern() ? "" : "!") << _totGates[id]->getGid();
+      }
+      cout << "\n";
+   }
 }
 
 void

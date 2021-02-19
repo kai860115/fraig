@@ -103,7 +103,7 @@ public:
       }
 
    private:
-      vector<HashNode> _buckets;
+      vector<HashNode>* _buckets;
       size_t _numBuckets;
       size_t _bucketNum;
       size_t _idx;
@@ -128,7 +128,7 @@ public:
    // Point to the first valid data
    iterator begin() const { 
       for (size_t i = 0; i < _numBuckets; i++) {
-         if (!_buckets[i].empth())
+         if (!_buckets[i].empty())
             return iterator(_buckets, _numBuckets, i, 0);
       }
       return iterator(); 

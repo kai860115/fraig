@@ -31,9 +31,23 @@ void
 CirGate::reportGate() const
 {
    string gateInfo = getTypeStr() + "(" + to_string(_gid) + ")" + (getName() == "" ? "" : "\"" + getName() + "\"") + ", line " + to_string(_lineNo);
-   cout << "==================================================\n";
-   cout << "= " << setw(47) << left << gateInfo << "=\n";
-   cout << "==================================================\n";
+   cout << "================================================================================\n";
+   cout << "= " << setw(77) << left << gateInfo << "\n";
+   cout << "= FECs:";
+   IdList* fecGrp = cirMgr->getFecGrp(getFecGrpIdx());
+   if (fecGrp) {
+      for (auto& id : (*fecGrp)) {
+         if (id == _gid)
+            continue;
+         cout << " " << (cirMgr->getGate(id)->getPattern() == _pattern ? "" : "!") << id;
+      }
+   }
+   cout << "\n";
+   cout << "= Value: ";
+   for (int i = 63; i >= 0; i--) 
+      cout << (((i + 1) & 7) == 0 && i != 63 ? "_" : "") << ((_pattern >> i) & 1);
+   cout << "\n";
+   cout << "================================================================================\n";
 }
 
 void
