@@ -735,6 +735,42 @@ CirMgr::writeAag(ostream& outfile) const
 void
 CirMgr::writeGate(ostream& outfile, CirGate *g) const
 {
+   CirGate::setGlobalRef();
+   GateList dfsList;
+   GateList piList;
+   GateList aigList;
+   dfsTraversal(g, dfsList);
+   size_t M = 0;
+   for (auto& cg : dfsList) {
+      if (cg->getType() == PI_GATE) 
+         piList.push_back(cg);
+      else if (cg->getType() == AIG_GATE)
+         aigList.push_back(cg);
+      if (cg->getGid() > M)
+         M = cg->getGid();
+   }
+   sort(piList.begin(), piList.end(), [](CirGate* g1, CirGate* g2) {
+      return g1->getGid() < g2->getGid();
+   });
+   outfile << "aag";
+   outfile << " " << M;
+   outfile << " " << piList.size();
+   outfile << " 0 1";
+   outfile << " " << aigList.size();
+   outfile << "\n";
+   for (auto& cg : piList) 
+      cg->write(outfile);
+   outfile << g->getGid() * 2 << "\n";
+   for (auto& cg : aigList) 
+      cg->write(outfile);
+      
+   for (size_t i = 0; i < piList.size(); i++) {
+      if (piList[i]->getName() != "")
+         outfile << "i" << i << " " << piList[i]->getName() << "\n";
+   }
+   outfile << "o0 " << g->getGid() << "\n";
+   outfile << "c\n";
+   outfile << "Write gate (" << g->getGid() << ") by Yu-Kai Ling\n";
 }
 
 void 
