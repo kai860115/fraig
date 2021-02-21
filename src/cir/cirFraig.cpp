@@ -121,7 +121,7 @@ CirMgr::fraig()
             }
          }
          identifyFec();
-         setFecGrpIdx(dfsList);
+         setFecGrpIdx();
          cout << "Updating by UNSAT... Total #FEC Group = " << _fecGrps.size() << "\n";
       }
 
@@ -131,7 +131,7 @@ CirMgr::fraig()
          fill(pat.begin(), pat.end(), 0);
          simulate(dfsList, count);
          identifyFec();
-         setFecGrpIdx(dfsList);
+         setFecGrpIdx();
          count = 0;
          cout << "Updating by SAT... Total #FEC Group = " << _fecGrps.size() << "\n";
       }

@@ -94,7 +94,7 @@ private:
    void genProofModel(SatSolver*&, GateList&);
    bool proofFec(SatSolver*&, CirGate*, CirGate*);
    void mergeFec(vector<unsigned*>&);
-   void setFecGrpIdx(GateList&);
+   void setFecGrpIdx();
 
 };
 

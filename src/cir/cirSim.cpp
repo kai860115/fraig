@@ -88,7 +88,7 @@ CirMgr::randomSim()
       sort(fecGrp->begin(), fecGrp->end());
    sort(_fecGrps.begin(), _fecGrps.end(), [](IdList* a, IdList* b) { return a->front() < b->front(); });
 
-   setFecGrpIdx(dfsList);
+   setFecGrpIdx();
 }
 
 void
@@ -164,7 +164,7 @@ CirMgr::fileSim(ifstream& patternFile)
       sort(fecGrp->begin(), fecGrp->end());
    sort(_fecGrps.begin(), _fecGrps.end(), [](IdList* a, IdList* b) { return a->front() < b->front(); });
 
-   setFecGrpIdx(dfsList);
+   setFecGrpIdx();
 }
 
 /*************************************************/
@@ -235,11 +235,11 @@ CirMgr::identifyFec()
 }
 
 void
-CirMgr::setFecGrpIdx(GateList& dfsList) 
+CirMgr::setFecGrpIdx() 
 {
-   _totGates[0]->setFecGrpIdx(UINT_MAX);
-   for (auto& g : dfsList) {
-      g->setFecGrpIdx(UINT_MAX);
+   for (auto& g : _totGates) {
+      if (g)
+         g->setFecGrpIdx(UINT_MAX);
    }
    for (size_t i = 0; i < _fecGrps.size(); i++) {
       for (auto& id : (*(_fecGrps[i]))) 
