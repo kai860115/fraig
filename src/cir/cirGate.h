@@ -105,6 +105,8 @@ public:
    virtual void simulation() {}
    virtual void setFecGrpIdx(const unsigned& i) {}
    virtual unsigned getFecGrpIdx() const { return UINT_MAX; }
+   Var getVar() const { return _var; }
+   void setVar(const Var& v) { _var = v; }
 
 
    // Printing functions
@@ -128,6 +130,7 @@ protected:
   unsigned _gid;
   unsigned _lineNo;
   ull _pattern;
+  Var _var;
 
 };
 

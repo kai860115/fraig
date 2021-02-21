@@ -6,4 +6,4 @@
 - [x] Optimization
 - [x] Strash
 - [x] Simulation
-- [ ] Fraig
+- [x] Fraig

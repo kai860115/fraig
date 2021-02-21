@@ -90,6 +90,11 @@ private:
    void initFecGrps(GateList&);
    void simulate(GateList&, size_t);
    void identifyFec();
+   void updateDfsList(GateList&) const;
+   void genProofModel(SatSolver*&, GateList&);
+   bool proofFec(SatSolver*&, CirGate*, CirGate*);
+   void mergeFec(vector<unsigned*>&);
+   void setFecGrpIdx(GateList&);
 
 };
 

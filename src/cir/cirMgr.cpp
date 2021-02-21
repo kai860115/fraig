@@ -621,14 +621,14 @@ void
 CirMgr::printNetlist() const
 {
    cout << "\n";
-   CirGate::setGlobalRef();
    GateList dfsList;
-   for (const auto& id : _POIds) {
-      dfsTraversal(_totGates[id], dfsList);
-   }
-   for (size_t i = 0; i < dfsList.size(); i++) {
-      cout << "[" << i << "] ";
-      dfsList[i]->printGate();
+   updateDfsList(dfsList);
+   size_t i = 0;
+   for (const auto& g : dfsList) {
+      if (g->getType() != UNDEF_GATE) {
+         cout << "[" << i++ << "] ";
+         g->printGate();
+      }
    }
 }
 
@@ -696,11 +696,8 @@ CirMgr::printFECPairs() const
 void
 CirMgr::writeAag(ostream& outfile) const
 {
-   CirGate::setGlobalRef();
    GateList dfsList;
-   for (const auto& id : _POIds) {
-      dfsTraversal(_totGates[id], dfsList);
-   }
+   updateDfsList(dfsList);
    GateList aigList;
    aigList.reserve(_headerInfo[4]);
    for (const auto& g : dfsList) {
@@ -795,6 +792,14 @@ CirMgr::dfsTraversal(CirGate* g, GateList& dfsList) const {
       if (fanin != 0)
          dfsTraversal(fanin, dfsList);
    }
-   if (g->getTypeStr()[0] != 'U')
-      dfsList.push_back(g);
+   dfsList.push_back(g);
+}
+
+void
+CirMgr::updateDfsList(GateList& dfsList) const {
+   dfsList.clear();
+   CirGate::setGlobalRef();
+   for (const auto& id : _POIds) {
+      dfsTraversal(_totGates[id], dfsList);
+   }
 }

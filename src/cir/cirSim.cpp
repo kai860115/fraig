@@ -51,12 +51,10 @@ private:
 void
 CirMgr::randomSim()
 {
-   CirGate::setGlobalRef();
    GateList dfsList;
    dfsList.reserve(_headerInfo[0] + _headerInfo[3] + 1);
-   for (auto& id : _POIds) 
-      dfsTraversal(_totGates[id], dfsList);
-      
+   updateDfsList(dfsList);
+
    if (!_initFec) {
       initFecGrps(dfsList);
       _initFec = true;
@@ -90,20 +88,15 @@ CirMgr::randomSim()
       sort(fecGrp->begin(), fecGrp->end());
    sort(_fecGrps.begin(), _fecGrps.end(), [](IdList* a, IdList* b) { return a->front() < b->front(); });
 
-   for (size_t i = 0; i < _fecGrps.size(); i++) {
-      for (auto& id : (*(_fecGrps[i]))) 
-         _totGates[id]->setFecGrpIdx(i);
-   }
+   setFecGrpIdx(dfsList);
 }
 
 void
 CirMgr::fileSim(ifstream& patternFile)
 {
-   CirGate::setGlobalRef();
    GateList dfsList;
    dfsList.reserve(_headerInfo[0] + _headerInfo[3] + 1);
-   for (auto& id : _POIds) 
-      dfsTraversal(_totGates[id], dfsList);
+   updateDfsList(dfsList);
 
    if (!_initFec)
       initFecGrps(dfsList);
@@ -171,10 +164,7 @@ CirMgr::fileSim(ifstream& patternFile)
       sort(fecGrp->begin(), fecGrp->end());
    sort(_fecGrps.begin(), _fecGrps.end(), [](IdList* a, IdList* b) { return a->front() < b->front(); });
 
-   for (size_t i = 0; i < _fecGrps.size(); i++) {
-      for (auto& id : (*(_fecGrps[i]))) 
-         _totGates[id]->setFecGrpIdx(i);
-   }
+   setFecGrpIdx(dfsList);
 }
 
 /*************************************************/
@@ -186,11 +176,9 @@ CirMgr::initFecGrps(GateList& dfsList)
    IdList* newFecGrp = new IdList;
    newFecGrp->reserve(dfsList.size());
    newFecGrp->push_back(0);
-   _totGates[0]->setFecGrpIdx(0);
    for (auto& g : dfsList) {
       if (g && g->getType() == AIG_GATE) {
          newFecGrp->push_back(g->getGid());
-         g->setFecGrpIdx(0);
       }
    }
    _fecGrps.push_back(newFecGrp);
@@ -243,5 +231,18 @@ CirMgr::identifyFec()
    for (auto& fecGrp : newFecGrps) {
       if (fecGrp)
          delete fecGrp;
+   }
+}
+
+void
+CirMgr::setFecGrpIdx(GateList& dfsList) 
+{
+   _totGates[0]->setFecGrpIdx(UINT_MAX);
+   for (auto& g : dfsList) {
+      g->setFecGrpIdx(UINT_MAX);
+   }
+   for (size_t i = 0; i < _fecGrps.size(); i++) {
+      for (auto& id : (*(_fecGrps[i]))) 
+         _totGates[id]->setFecGrpIdx(i);
    }
 }
